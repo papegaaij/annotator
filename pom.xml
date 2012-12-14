@@ -9,7 +9,7 @@
 	<packaging>jar</packaging>
 
 	<name>The Annotator</name>
-	<description>Add annotations add runtime</description>
+	<description>I will annotate your classes</description>
 
 	<organization>
 		<name>Topicus Onderwijs B.V.</name>
@@ -52,6 +52,17 @@
 			<artifactId>log4j</artifactId>
 			<version>${log4j.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.enterprise</groupId>
+			<artifactId>cdi-api</artifactId>
+			<version>1.0-SP4</version>
 		</dependency>
 	</dependencies>
 	
