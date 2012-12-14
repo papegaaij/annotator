@@ -9,9 +9,13 @@ import javassist.util.proxy.ProxyFactory;
 
 public class ClassAnnotator<T> {
 	private T classProxy;
+	private Annotator annotator;
+	private Class<T> classToAnnotate;
 
-	public ClassAnnotator(Class<T> clazz) {
-		classProxy = createProxy(clazz);
+	public ClassAnnotator(Class<T> classToAnnotate, Annotator annotator) {
+		this.classToAnnotate = classToAnnotate;
+		classProxy = createProxy(classToAnnotate);
+		this.annotator = annotator;
 	}
 
 	private T createProxy(Class<T> clazz) {
@@ -36,10 +40,14 @@ public class ClassAnnotator<T> {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	public <A extends Annotation> void addToClass(AnnotationBuilder<A> builder) {
+		annotator.add(classToAnnotate, builder.build());
+	}
 
-	public <A extends Annotation> T addTo(AnnotationBuilder<A> builder) {
-		builder.build(builder.getAnn());
-		((Proxy) classProxy).setHandler(new AnnotationCollectionHandler<>(builder));
+	public <A extends Annotation> T addToMethod(AnnotationBuilder<A> builder) {
+		((Proxy) classProxy).setHandler(new AnnotationCollectionHandler<>(
+				annotator, builder));
 		return classProxy;
 	}
 }

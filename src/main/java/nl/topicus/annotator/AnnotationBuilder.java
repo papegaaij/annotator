@@ -33,13 +33,10 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 			if (curProperty.getDefaultValue() != null)
 				values.put(curProperty, curProperty.getDefaultValue());
 		}
+		setup(ann);
 	}
 
-	public abstract void build(A ann);
-
-	public A getAnn() {
-		return ann;
-	}
+	public abstract void setup(A ann);
 
 	public <T, V extends T> AnnotationBuilder<A> set(
 			Class<? extends T> annotationProperty, Class<V> value) {
@@ -53,12 +50,7 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 		return this;
 	}
 
-	void bindTo(Method method) {
-		A builtAnnotation = createAnnotation();
-		System.out.println(builtAnnotation);
-	}
-
-	private A createAnnotation() {
+	public A build() {
 		ProxyFactory factory = new ProxyFactory();
 		factory.setFilter(new MethodFilter() {
 			public boolean isHandled(Method m) {

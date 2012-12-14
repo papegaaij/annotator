@@ -5,16 +5,19 @@ import java.lang.reflect.Method;
 
 public class AnnotationCollectionHandler<A extends Annotation> extends
 		StubMethodHandler {
+	private Annotator annotator;
 	private AnnotationBuilder<A> builder;
 
-	public AnnotationCollectionHandler(AnnotationBuilder<A> builder) {
+	public AnnotationCollectionHandler(Annotator annotator,
+			AnnotationBuilder<A> builder) {
+		this.annotator = annotator;
 		this.builder = builder;
 	}
 
 	@Override
 	public Object invoke(Object self, Method thisMethod, Method proceed,
 			Object[] args) throws Throwable {
-		builder.bindTo(thisMethod);
+		annotator.add(thisMethod, builder.build());
 		return createReturnValue(thisMethod);
 	}
 }
