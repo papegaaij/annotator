@@ -1,7 +1,6 @@
 package nl.topicus.annotator;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.Delayed;
 
 import org.junit.Assert;
 import org.junit.Test;
