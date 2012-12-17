@@ -2,7 +2,10 @@ package nl.topicus.annotator;
 
 import java.lang.reflect.Method;
 
+import nl.topicus.annotator.agent.AnnotatorAgent;
+
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class BasicTests {
@@ -13,6 +16,11 @@ public class BasicTests {
 		} catch (NoSuchMethodException | SecurityException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	@BeforeClass
+	public static void setup() {
+		AnnotatorAgent.loadDynamicAgent();
 	}
 
 	@Test

@@ -8,18 +8,61 @@
 		<version>1.0-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
-	
+
 	<artifactId>annotator-agent</artifactId>
 	<packaging>jar</packaging>
 
 	<name>The Annotator Agent</name>
 	<description>The Annotator Agent</description>
 
+	<dependencies>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.sun</groupId>
+			<artifactId>tools</artifactId>
+			<version>1.7.0</version>
+			<scope>system</scope>
+			<systemPath>${java.home}/../lib/tools.jar</systemPath>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>attached</goal>
+						</goals>
+						<phase>package</phase>
+						<configuration>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+							<archive>
+								<manifestEntries>
+									<Premain-Class>nl.topicus.annotator.agent.AnnotatorAgent</Premain-Class>
+									<Agent-Class>nl.topicus.annotator.agent.InstrumentationFactory</Agent-Class>
+									<Can-Redefine-Classes>true</Can-Redefine-Classes>
+									<Can-Retransform-Classes>true</Can-Retransform-Classes>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

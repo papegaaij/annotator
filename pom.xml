@@ -32,7 +32,6 @@
 	<modules>
 		<module>annotator-core</module>
 		<module>annotator-agent</module>
-		<module>annotator-loader</module>
 	</modules>
 
 	<dependencyManagement>
