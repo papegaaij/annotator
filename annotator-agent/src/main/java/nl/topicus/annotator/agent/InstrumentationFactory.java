@@ -33,11 +33,10 @@ import java.security.PrivilegedAction;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.sun.tools.attach.VirtualMachine;
 
@@ -48,8 +47,8 @@ import com.sun.tools.attach.VirtualMachine;
  * @since 1.0.0
  */
 public class InstrumentationFactory {
-	private static final Logger log = LoggerFactory
-			.getLogger(InstrumentationFactory.class);
+	private static final Logger log = Logger
+			.getLogger(InstrumentationFactory.class.getName());
 	private static Instrumentation _inst;
 	private static boolean _dynamicallyInstall = true;
 	private static final String _name = InstrumentationFactory.class.getName();
@@ -81,8 +80,8 @@ public class InstrumentationFactory {
 	 *         are encountered.
 	 */
 	public static synchronized Instrumentation getInstrumentation() {
-		if (log.isTraceEnabled() == true) {
-			log.trace(_name + ".getInstrumentation() _inst:" + _inst
+		if (log.isLoggable(Level.INFO)) {
+			log.info(_name + ".getInstrumentation() _inst:" + _inst
 					+ " _dynamicallyInstall:" + _dynamicallyInstall);
 		}
 		if (_inst != null || !_dynamicallyInstall)
@@ -90,24 +89,7 @@ public class InstrumentationFactory {
 
 		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
-				// Dynamic agent enhancement should only occur when the OpenJPA
-				// library is
-				// loaded using the system class loader. Otherwise, the OpenJPA
-				// library may get loaded by separate, disjunct loaders, leading
-				// to linkage issues.
-				try {
-					if (!InstrumentationFactory.class.getClassLoader().equals(
-							ClassLoader.getSystemClassLoader())) {
-						return null;
-					}
-				} catch (Throwable t) {
-					return null;
-				}
-				String agentPath = getAgentJar();
-				if (agentPath == null) {
-					return null;
-				}
-				loadAgent(agentPath);
+				loadAgent(getAgentJar());
 				return null;
 			}// end run()
 		});
@@ -175,28 +157,28 @@ public class InstrumentationFactory {
 		// Determine whether the File that this class was loaded from has this
 		// class defined as the Agent-Class.
 		boolean createJar = false;
-		if (cs == null || agentJarFile == null
-				|| agentJarFile.isDirectory() == true) {
+		if (cs == null || agentJarFile == null || agentJarFile.isDirectory()) {
 			createJar = true;
-		} else if (validateAgentJarManifest(agentJarFile, _name) == false) {
+		} else if (!validateAgentJarManifest(agentJarFile, _name)) {
 			// We have an agentJarFile, but this class isn't the Agent-Class.
 			createJar = true;
 		}
 
 		String agentJar;
-		if (createJar == true) {
+		if (createJar) {
 			// This can happen when running in eclipse as an OpenJPA
 			// developer or for some reason the CodeSource is null. We
 			// should log a warning here because this will create a jar
 			// in your temp directory that doesn't always get cleaned up.
 			try {
 				agentJar = createAgentJar();
-				if (log.isInfoEnabled() == true) {
+				if (log.isLoggable(Level.INFO)) {
 					log.info("temp-file-creation " + agentJar);
 				}
 			} catch (IOException ioe) {
-				if (log.isTraceEnabled() == true) {
-					log.trace(_name + ".getAgentJar() caught unexpected "
+				if (log.isLoggable(Level.INFO)) {
+					log.log(Level.INFO, _name
+							+ ".getAgentJar() caught unexpected "
 							+ "exception.", ioe);
 				}
 				agentJar = null;
@@ -235,11 +217,11 @@ public class InstrumentationFactory {
 			vm.loadAgent(agentJar, "");
 			vm.detach();
 		} catch (Throwable t) {
-			if (log.isTraceEnabled() == true) {
+			if (log.isLoggable(Level.INFO)) {
 				// Log the message from the exception. Don't log the entire
 				// stack as this is expected when running on a JDK that doesn't
 				// support the Attach API.
-				log.trace(_name + ".loadAgent() caught an exception. Message: "
+				log.info(_name + ".loadAgent() caught an exception. Message: "
 						+ t.getMessage());
 			}
 		}
@@ -271,8 +253,8 @@ public class InstrumentationFactory {
 				return true;
 			}
 		} catch (Exception e) {
-			if (log.isTraceEnabled() == true) {
-				log.trace(_name
+			if (log.isLoggable(Level.INFO)) {
+				log.info(_name
 						+ ".validateAgentJarManifest() caught unexpected "
 						+ "exception " + e.getMessage());
 			}

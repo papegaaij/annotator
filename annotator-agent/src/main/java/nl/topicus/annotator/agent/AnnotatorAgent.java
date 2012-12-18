@@ -1,14 +1,13 @@
 package nl.topicus.annotator.agent;
 
 import java.lang.instrument.Instrumentation;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.lang.instrument.UnmodifiableClassException;
+import java.util.logging.Logger;
 
 public class AnnotatorAgent {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(AnnotatorAgent.class);
+	private static final Logger log = Logger.getLogger(AnnotatorAgent.class
+			.getName());
 
 	private static boolean loadAttempted = false;
 	private static boolean loadSuccessful = false;
@@ -33,6 +32,7 @@ public class AnnotatorAgent {
 	 * @return True if the agent is loaded successfully
 	 */
 	public static synchronized boolean loadDynamicAgent() {
+		log.info("Dynamically loading the Annotator agent");
 		if (loadAttempted == false && disableDynamicAgent == false) {
 			Instrumentation inst = InstrumentationFactory.getInstrumentation();
 			if (inst != null) {
@@ -70,6 +70,15 @@ public class AnnotatorAgent {
 
 	private static void registerClassLoadEnhancer(Instrumentation inst) {
 		log.info("I will now annotate your classes");
-		inst.addTransformer(new AnnotatorClassFileTransformer());
+		// inst.addTransformer(new AnnotatorClassFileTransformer(), true);
+	}
+
+	public static void retransform(Class<?>... classes) {
+		try {
+			InstrumentationFactory.getInstrumentation().retransformClasses(
+					classes);
+		} catch (UnmodifiableClassException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

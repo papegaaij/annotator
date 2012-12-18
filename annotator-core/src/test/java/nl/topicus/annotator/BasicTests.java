@@ -18,6 +18,9 @@ public class BasicTests {
 		}
 	}
 	
+	private static class Annotated {
+	}
+	
 	@BeforeClass
 	public static void setup() {
 		AnnotatorAgent.loadDynamicAgent();
@@ -41,5 +44,12 @@ public class BasicTests {
 				annotator.getAnnotation(testMethod, Test.class).timeout());
 		Assert.assertEquals(RuntimeException.class,
 				annotator.getAnnotation(testMethod, Test.class).expected());
+	}
+	
+	@Test
+	public void annotedIsAnnotated() {
+		Assert.assertFalse(BasicTests.class.isAnnotationPresent(Deprecated.class));
+		AnnotatorAgent.retransform(BasicTests.class);
+		Assert.assertTrue(BasicTests.class.isAnnotationPresent(Deprecated.class));
 	}
 }
