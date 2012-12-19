@@ -14,7 +14,7 @@
 
 	<name>The Annotator Agent</name>
 	<description>The Annotator Agent</description>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>com.sun</groupId>
@@ -24,7 +24,7 @@
 			<systemPath>${java.home}/../lib/tools.jar</systemPath>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -33,32 +33,20 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>attached</goal>
-						</goals>
-						<phase>package</phase>
-						<configuration>
-							<descriptorRefs>
-								<descriptorRef>jar-with-dependencies</descriptorRef>
-							</descriptorRefs>
-							<archive>
-								<manifestEntries>
-									<Premain-Class>nl.topicus.annotator.agent.AnnotatorAgent</Premain-Class>
-									<Agent-Class>nl.topicus.annotator.agent.InstrumentationFactory</Agent-Class>
-									<Can-Redefine-Classes>true</Can-Redefine-Classes>
-									<Can-Retransform-Classes>true</Can-Retransform-Classes>
-								</manifestEntries>
-							</archive>
-						</configuration>
-					</execution>
-				</executions>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+						</manifest>
+						<manifestEntries>
+							<Premain-Class>nl.topicus.annotator.agent.AnnotatorAgent</Premain-Class>
+							<Agent-Class>nl.topicus.annotator.agent.InstrumentationFactory</Agent-Class>
+							<Can-Redefine-Classes>true</Can-Redefine-Classes>
+							<Can-Retransform-Classes>true</Can-Retransform-Classes>
+						</manifestEntries>
+					</archive>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

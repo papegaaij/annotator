@@ -69,7 +69,7 @@ public class AnnotatorAgent {
 	}
 
 	private static void registerClassLoadEnhancer(Instrumentation inst) {
-		log.info("I will now annotate your classes");
+		//log.info("I will now annotate your classes");
 		// inst.addTransformer(new AnnotatorClassFileTransformer(), true);
 	}
 
