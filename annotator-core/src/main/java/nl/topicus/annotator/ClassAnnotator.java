@@ -3,6 +3,8 @@ package nl.topicus.annotator;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
+import nl.topicus.annotator.impl.AnnotationCollectionHandler;
+
 import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
@@ -40,14 +42,24 @@ public class ClassAnnotator<T> {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	public <A extends Annotation> void addToClass(AnnotationBuilder<A> builder) {
+
+	public <A extends Annotation> ClassAnnotator<T> addToClass(
+			AnnotationBuilder<A> builder) {
+		if (classToAnnotate.isAnnotationPresent(builder.annotationType())
+				|| annotator.isAnnotationPresent(classToAnnotate,
+						builder.annotationType())) {
+			throw new IllegalArgumentException(classToAnnotate.getName()
+					+ " is already annotated with "
+					+ builder.annotationType().getName());
+		}
 		annotator.add(classToAnnotate, builder);
+		return this;
 	}
 
 	public <A extends Annotation> T addToMethod(AnnotationBuilder<A> builder) {
-		((ProxyObject) classProxy).setHandler(new AnnotationCollectionHandler<>(
-				annotator, builder));
+		((ProxyObject) classProxy)
+				.setHandler(new AnnotationCollectionHandler<>(annotator,
+						builder));
 		return classProxy;
 	}
 }

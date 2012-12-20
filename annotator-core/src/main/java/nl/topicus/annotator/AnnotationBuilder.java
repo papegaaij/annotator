@@ -11,11 +11,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javassist.util.proxy.MethodFilter;
-import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 
 import javax.enterprise.util.AnnotationLiteral;
+
+import nl.topicus.annotator.impl.StubMethodHandler;
 
 public abstract class AnnotationBuilder<A extends Annotation> {
 	private static final Method ANNOTATION_TYPE_METHOD;

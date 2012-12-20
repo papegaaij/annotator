@@ -1,20 +1,13 @@
-package nl.topicus.annotator;
+package nl.topicus.annotator.impl;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.lang.instrument.ClassFileTransformer;
-import java.security.ProtectionDomain;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
-import javassist.bytecode.AnnotationsAttribute;
-import javassist.bytecode.ClassFile;
 import javassist.bytecode.ConstPool;
 import javassist.bytecode.annotation.Annotation;
 import javassist.bytecode.annotation.AnnotationMemberValue;
@@ -32,48 +25,27 @@ import javassist.bytecode.annotation.MemberValue;
 import javassist.bytecode.annotation.ShortMemberValue;
 import javassist.bytecode.annotation.StringMemberValue;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class AnnotatorClassFileTransformer implements ClassFileTransformer {
-	private static final Logger log = LoggerFactory
-			.getLogger(AnnotatorClassFileTransformer.class);
+public abstract class AbstractAnnotationCreator implements AnnotationMutator {
 	private String annotationName;
 	private Map<String, Object> values;
 
-	public AnnotatorClassFileTransformer(String annotationName,
+	public AbstractAnnotationCreator(String annotationName,
 			Map<String, Object> values) {
 		this.annotationName = annotationName;
 		this.values = values;
 	}
 
-	@Override
-	public byte[] transform(ClassLoader loader, String className,
-			Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
-			byte[] classfileBuffer) {
-		log.warn("Transforming " + className);
-		ClassPool pool = ClassPool.getDefault();
-		try {
-			CtClass jClass = pool.makeClass(new ByteArrayInputStream(
-					classfileBuffer));
-			ClassFile classFile = jClass.getClassFile();
-			ConstPool cp = classFile.getConstPool();
-			AnnotationsAttribute attr = new AnnotationsAttribute(cp,
-					AnnotationsAttribute.visibleTag);
-			attr.setAnnotation(createAnnotation(jClass.getClassFile()
-					.getConstPool(), annotationName, values));
-			// TODO moet ook met methods
-			classFile.addAttribute(attr);
-			byte[] ret = jClass.toBytecode();
-			jClass.defrost();
-			return ret;
-		} catch (IOException | CannotCompileException | NotFoundException e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
+	public void mutate(CtClass jClass) throws NotFoundException {
+		addAnnotationToElement(
+				jClass,
+				createAnnotation(jClass.getClassFile().getConstPool(),
+						annotationName, values));
 	}
 
-	protected Annotation createAnnotation(ConstPool cp, String className,
+	protected abstract void addAnnotationToElement(CtClass jClass,
+			Annotation annotation) throws NotFoundException;
+
+	private Annotation createAnnotation(ConstPool cp, String className,
 			Map<String, Object> members) throws NotFoundException {
 		CtClass annotationCtClass = ClassPool.getDefault().get(className);
 		Annotation ret = new Annotation(cp, annotationCtClass);

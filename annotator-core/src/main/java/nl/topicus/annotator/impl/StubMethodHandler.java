@@ -1,4 +1,4 @@
-package nl.topicus.annotator;
+package nl.topicus.annotator.impl;
 
 import java.lang.reflect.Method;
 

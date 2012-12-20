@@ -1,7 +1,10 @@
-package nl.topicus.annotator;
+package nl.topicus.annotator.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+
+import nl.topicus.annotator.AnnotationBuilder;
+import nl.topicus.annotator.Annotator;
 
 public class AnnotationCollectionHandler<A extends Annotation> extends
 		StubMethodHandler {
