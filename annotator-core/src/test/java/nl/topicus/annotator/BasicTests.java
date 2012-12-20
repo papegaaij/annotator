@@ -1,14 +1,16 @@
 package nl.topicus.annotator;
 
+import java.lang.annotation.ElementType;
 import java.lang.reflect.Method;
 
-import nl.topicus.annotator.agent.AnnotatorAgent;
-
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BasicTests {
+	private static final Logger log = LoggerFactory.getLogger(BasicTests.class);
+
 	public static final Method m(Class<?> declaringClass, String name,
 			Class<?>... types) {
 		try {
@@ -17,39 +19,36 @@ public class BasicTests {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	private static class Annotated {
-	}
-	
-	@BeforeClass
-	public static void setup() {
-		AnnotatorAgent.loadDynamicAgent();
+
+	@Test
+	public void testAnnotationBuilding() {
+		AnnotationBuilder<TestAnnotation> builder = new AnnotationBuilder<TestAnnotation>(
+				TestAnnotation.class) {
+			@Override
+			public void setup(TestAnnotation ann) {
+				set(ann.enumValue(), ElementType.ANNOTATION_TYPE);
+				set(ann.longs(), new long[] { 5, 6, 7 });
+				set(ann.nested(), new AnnotationBuilder<NestedAnnotation>(
+						NestedAnnotation.class) {
+					@Override
+					public void setup(NestedAnnotation ann) {
+						set(ann.value(), "blaat");
+					}
+				}.build());
+			}
+		};
+		log.info(builder.values().toString());
+		log.info(builder.build().toString());
 	}
 
 	@Test
-	public void test() {
+	public void testClassAnnotation() {
 		Annotator annotator = new Annotator();
 		ClassAnnotator<BasicTests> classAnnotator = annotator
 				.annotate(BasicTests.class);
-		classAnnotator.addToMethod(new AnnotationBuilder<Test>(Test.class) {
-			@Override
-			public void setup(Test ann) {
-				set(ann.timeout(), 1000L);
-				set(ann.expected(), RuntimeException.class);
-			}
-		}).test();
-
-		Method testMethod = m(BasicTests.class, "test");
-		Assert.assertEquals(1000L,
-				annotator.getAnnotation(testMethod, Test.class).timeout());
-		Assert.assertEquals(RuntimeException.class,
-				annotator.getAnnotation(testMethod, Test.class).expected());
-	}
-	
-	@Test
-	public void annotedIsAnnotated() {
-		Assert.assertFalse(BasicTests.class.isAnnotationPresent(Deprecated.class));
-		AnnotatorAgent.retransform(BasicTests.class);
-		Assert.assertTrue(BasicTests.class.isAnnotationPresent(Deprecated.class));
+		classAnnotator.addToClass(AnnotationBuilder.of(Deprecated.class));
+		annotator.process();
+		Assert.assertTrue(BasicTests.class
+				.isAnnotationPresent(Deprecated.class));
 	}
 }

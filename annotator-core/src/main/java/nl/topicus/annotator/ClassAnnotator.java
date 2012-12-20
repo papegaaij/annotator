@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyFactory;
+import javassist.util.proxy.ProxyObject;
 
 public class ClassAnnotator<T> {
 	private T classProxy;
@@ -42,11 +43,11 @@ public class ClassAnnotator<T> {
 	}
 	
 	public <A extends Annotation> void addToClass(AnnotationBuilder<A> builder) {
-		annotator.add(classToAnnotate, builder.build());
+		annotator.add(classToAnnotate, builder);
 	}
 
 	public <A extends Annotation> T addToMethod(AnnotationBuilder<A> builder) {
-		((Proxy) classProxy).setHandler(new AnnotationCollectionHandler<>(
+		((ProxyObject) classProxy).setHandler(new AnnotationCollectionHandler<>(
 				annotator, builder));
 		return classProxy;
 	}

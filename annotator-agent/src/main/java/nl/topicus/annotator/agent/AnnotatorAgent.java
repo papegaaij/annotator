@@ -1,14 +1,16 @@
 package nl.topicus.annotator.agent;
 
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.util.logging.Logger;
+import java.security.ProtectionDomain;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.WeakHashMap;
 
 public class AnnotatorAgent {
-
-	private static final Logger log = Logger.getLogger(AnnotatorAgent.class
-			.getName());
-
+	private static WeakHashMap<Class<?>, List<ClassFileTransformer>> transformers = new WeakHashMap<>();
 	private static boolean loadAttempted = false;
 	private static boolean loadSuccessful = false;
 	private static boolean disableDynamicAgent = false;
@@ -32,7 +34,6 @@ public class AnnotatorAgent {
 	 * @return True if the agent is loaded successfully
 	 */
 	public static synchronized boolean loadDynamicAgent() {
-		log.info("Dynamically loading the Annotator agent");
 		if (loadAttempted == false && disableDynamicAgent == false) {
 			Instrumentation inst = InstrumentationFactory.getInstrumentation();
 			if (inst != null) {
@@ -64,13 +65,43 @@ public class AnnotatorAgent {
 		}
 
 		registerClassLoadEnhancer(inst);
+		InstrumentationFactory.setInstrumentation(inst);
 		InstrumentationFactory.setDynamicallyInstallAgent(false);
 		loadSuccessful = true;
 	}
 
 	private static void registerClassLoadEnhancer(Instrumentation inst) {
-		//log.info("I will now annotate your classes");
-		// inst.addTransformer(new AnnotatorClassFileTransformer(), true);
+		System.out.println("I will annotate your classes!");
+		inst.addTransformer(new ClassFileTransformer() {
+			@Override
+			public byte[] transform(ClassLoader loader, String className,
+					Class<?> classBeingRedefined,
+					ProtectionDomain protectionDomain, byte[] classfileBuffer)
+					throws IllegalClassFormatException {
+				List<ClassFileTransformer> transformersForClass = transformers
+						.get(classBeingRedefined);
+				if (transformersForClass != null) {
+					for (ClassFileTransformer curTransformer : transformersForClass) {
+						classfileBuffer = curTransformer.transform(loader,
+								className, classBeingRedefined,
+								protectionDomain, classfileBuffer);
+					}
+				}
+				return classfileBuffer;
+			}
+		}, true);
+	}
+
+	public static void addAnnotations(Class<?> clazz,
+			ClassFileTransformer transformer) {
+		List<ClassFileTransformer> transformersForClass = transformers
+				.get(transformer);
+		if (transformersForClass == null) {
+			transformersForClass = new ArrayList<>();
+			transformers.put(clazz, transformersForClass);
+		}
+		transformersForClass.add(transformer);
+		retransform(clazz);
 	}
 
 	public static void retransform(Class<?>... classes) {

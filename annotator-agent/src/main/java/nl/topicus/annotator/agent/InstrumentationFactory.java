@@ -33,8 +33,6 @@ import java.security.PrivilegedAction;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -47,8 +45,6 @@ import com.sun.tools.attach.VirtualMachine;
  * @since 1.0.0
  */
 public class InstrumentationFactory {
-	private static final Logger log = Logger
-			.getLogger(InstrumentationFactory.class.getName());
 	private static Instrumentation _inst;
 	private static boolean _dynamicallyInstall = true;
 	private static final String _name = InstrumentationFactory.class.getName();
@@ -80,23 +76,27 @@ public class InstrumentationFactory {
 	 *         are encountered.
 	 */
 	public static synchronized Instrumentation getInstrumentation() {
-		if (log.isLoggable(Level.INFO)) {
-			log.info(_name + ".getInstrumentation() _inst:" + _inst
-					+ " _dynamicallyInstall:" + _dynamicallyInstall);
-		}
 		if (_inst != null || !_dynamicallyInstall)
 			return _inst;
 
 		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
+				if (!InstrumentationFactory.class.getClassLoader().equals(
+						ClassLoader.getSystemClassLoader())) {
+					throw new IllegalStateException(
+							"Cannot load the agent when InstrumentationFactory"
+									+ " is not loaded by the system class loader");
+				}
 				loadAgent(getAgentJar());
 				return null;
-			}// end run()
+			}
 		});
 		// If the load(...) agent call was successful, this variable will no
 		// longer be null.
+		if (_inst == null)
+			throw new IllegalStateException("Dynamic loading of the agent failed");
 		return _inst;
-	}// end getInstrumentation()
+	}
 
 	/**
 	 * The method that is called when a jar is added as an agent at runtime. All
@@ -172,23 +172,16 @@ public class InstrumentationFactory {
 			// in your temp directory that doesn't always get cleaned up.
 			try {
 				agentJar = createAgentJar();
-				if (log.isLoggable(Level.INFO)) {
-					log.info("temp-file-creation " + agentJar);
-				}
+				System.out.println("Loading agent from " + agentJar);
 			} catch (IOException ioe) {
-				if (log.isLoggable(Level.INFO)) {
-					log.log(Level.INFO, _name
-							+ ".getAgentJar() caught unexpected "
-							+ "exception.", ioe);
-				}
-				agentJar = null;
+				throw new RuntimeException(ioe);
 			}
 		} else {
 			agentJar = agentJarFile.getAbsolutePath();
 		}
 
 		return agentJar;
-	}// end getAgentJar
+	}
 
 	/**
 	 * Attach and load an agent class.
@@ -217,13 +210,9 @@ public class InstrumentationFactory {
 			vm.loadAgent(agentJar, "");
 			vm.detach();
 		} catch (Throwable t) {
-			if (log.isLoggable(Level.INFO)) {
-				// Log the message from the exception. Don't log the entire
-				// stack as this is expected when running on a JDK that doesn't
-				// support the Attach API.
-				log.info(_name + ".loadAgent() caught an exception. Message: "
-						+ t.getMessage());
-			}
+			System.err.println(_name
+					+ ".loadAgent() caught an exception. Message: "
+					+ t.getMessage());
 		}
 	}
 
@@ -253,12 +242,8 @@ public class InstrumentationFactory {
 				return true;
 			}
 		} catch (Exception e) {
-			if (log.isLoggable(Level.INFO)) {
-				log.info(_name
-						+ ".validateAgentJarManifest() caught unexpected "
-						+ "exception " + e.getMessage());
-			}
+			e.printStackTrace();
 		}
 		return false;
-	}// end validateAgentJarManifest
+	}
 }

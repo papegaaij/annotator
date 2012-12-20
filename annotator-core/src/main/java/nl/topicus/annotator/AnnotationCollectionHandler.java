@@ -17,7 +17,7 @@ public class AnnotationCollectionHandler<A extends Annotation> extends
 	@Override
 	public Object invoke(Object self, Method thisMethod, Method proceed,
 			Object[] args) throws Throwable {
-		annotator.add(thisMethod, builder.build());
+		annotator.add(thisMethod, builder);
 		return createReturnValue(thisMethod);
 	}
 }
