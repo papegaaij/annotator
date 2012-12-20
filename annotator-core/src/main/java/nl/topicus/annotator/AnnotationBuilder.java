@@ -118,10 +118,6 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 		Class<A> proxyClass = factory.createClass();
 		try {
 			A ret = proxyClass.newInstance();
-			for (Class<?> curInterface : ret.getClass().getInterfaces()) {
-				System.out.println(curInterface + " == Proxy : "
-						+ (curInterface == Proxy.class));
-			}
 			((ProxyObject) ret).setHandler(new StubMethodHandler() {
 				@Override
 				public Object invoke(Object self, Method m, Method proceed,

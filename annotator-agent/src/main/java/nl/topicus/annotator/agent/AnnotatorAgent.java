@@ -82,9 +82,14 @@ public class AnnotatorAgent {
 						.get(classBeingRedefined);
 				if (transformersForClass != null) {
 					for (ClassFileTransformer curTransformer : transformersForClass) {
-						classfileBuffer = curTransformer.transform(loader,
-								className, classBeingRedefined,
-								protectionDomain, classfileBuffer);
+						try {
+							classfileBuffer = curTransformer.transform(loader,
+									className, classBeingRedefined,
+									protectionDomain, classfileBuffer);
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw e;
+						}
 					}
 				}
 				return classfileBuffer;
@@ -95,7 +100,7 @@ public class AnnotatorAgent {
 	public static void addAnnotations(Class<?> clazz,
 			ClassFileTransformer transformer) {
 		List<ClassFileTransformer> transformersForClass = transformers
-				.get(transformer);
+				.get(clazz);
 		if (transformersForClass == null) {
 			transformersForClass = new ArrayList<>();
 			transformers.put(clazz, transformersForClass);

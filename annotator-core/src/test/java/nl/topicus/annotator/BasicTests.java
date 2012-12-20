@@ -21,8 +21,11 @@ public class BasicTests {
 	}
 
 	@Test
-	public void testAnnotationBuilding() {
-		AnnotationBuilder<TestAnnotation> builder = new AnnotationBuilder<TestAnnotation>(
+	public void complexAnnotation() {
+		Annotator annotator = new Annotator();
+		ClassAnnotator<BasicTests> classAnnotator = annotator
+				.annotate(BasicTests.class);
+		classAnnotator.addToClass(new AnnotationBuilder<TestAnnotation>(
 				TestAnnotation.class) {
 			@Override
 			public void setup(TestAnnotation ann) {
@@ -36,13 +39,17 @@ public class BasicTests {
 					}
 				}.build());
 			}
-		};
-		log.info(builder.values().toString());
-		log.info(builder.build().toString());
+		});
+		annotator.process();
+
+		TestAnnotation builtAnnotation = BasicTests.class
+				.getAnnotation(TestAnnotation.class);
+		Assert.assertNotNull(builtAnnotation);
+		log.info(builtAnnotation.toString());
 	}
 
 	@Test
-	public void testClassAnnotation() {
+	public void classAnnotation() {
 		Annotator annotator = new Annotator();
 		ClassAnnotator<BasicTests> classAnnotator = annotator
 				.annotate(BasicTests.class);
