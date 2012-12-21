@@ -1,4 +1,4 @@
-package nl.topicus.annotator;
+package nl.topicus.annotator.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE, ElementType.METHOD })
-public @interface Marker2 {
+public @interface Marker3 {
 
 }

@@ -1,12 +1,12 @@
-package nl.topicus.annotator;
+package nl.topicus.annotator.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+@Retention(RetentionPolicy.SOURCE)
 @Target({ ElementType.TYPE, ElementType.METHOD })
-@Retention(RetentionPolicy.RUNTIME)
-public @interface NestedAnnotation {
-	String value();
+public @interface SourceRetained {
+
 }

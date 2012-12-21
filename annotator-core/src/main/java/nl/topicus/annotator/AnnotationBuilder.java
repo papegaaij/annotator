@@ -16,6 +16,10 @@ import javassist.util.proxy.ProxyObject;
 
 import javax.enterprise.util.AnnotationLiteral;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.FluentIterable;
+
 import nl.topicus.annotator.impl.StubMethodHandler;
 
 public abstract class AnnotationBuilder<A extends Annotation> {
@@ -41,6 +45,7 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 				values.put(curProperty, curProperty.getDefaultValue());
 		}
 		setup(ann);
+		assertComplete();
 	}
 
 	public static <A extends Annotation> AnnotationBuilder<A> of(
@@ -167,5 +172,26 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 			return ret;
 		}
 		return value;
+	}
+
+	private void assertComplete() {
+		List<Method> missingMembers = new ArrayList<>();
+		for (Method curProperty : annotationClass.getDeclaredMethods()) {
+			if (!values.containsKey(curProperty)) {
+				missingMembers.add(curProperty);
+			}
+		}
+		if (!missingMembers.isEmpty()) {
+			throw new IllegalStateException("The annotation @"
+					+ annotationClass.getSimpleName()
+					+ " must define the attribute(s) "
+					+ Joiner.on(", ").join(
+							FluentIterable.from(missingMembers).transform(
+									new Function<Method, String>() {
+										public String apply(Method input) {
+											return input.getName();
+										}
+									})));
+		}
 	}
 }

@@ -6,6 +6,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -77,9 +78,24 @@ public class Annotator {
 
 	public <A extends Annotation> void add(AnnotatedElement e,
 			AnnotationBuilder<A> builder) {
+		removeContainerIfExists(e, builder.annotationType());
 		AnnotationContainer<A> container = new AnnotationContainer<A>(e,
 				builder);
 		annotations.put(container.getDeclaringClass(), container);
+	}
+
+	private void removeContainerIfExists(AnnotatedElement element,
+			Class<? extends Annotation> annotationClass) {
+		Iterator<AnnotationContainer<?>> it = annotations.get(
+				declaringClass(element)).iterator();
+		while (it.hasNext()) {
+			AnnotationContainer<?> curContainer = it.next();
+			if (curContainer.getElement().equals(element)
+					&& curContainer.getAnnotationType().equals(annotationClass)) {
+				it.remove();
+				return;
+			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")

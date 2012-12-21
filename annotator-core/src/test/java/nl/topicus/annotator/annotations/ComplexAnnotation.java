@@ -1,4 +1,4 @@
-package nl.topicus.annotator;
+package nl.topicus.annotator.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface TestAnnotation {
+public @interface ComplexAnnotation {
 	long[] longs();
 
 	ElementType enumValue();
