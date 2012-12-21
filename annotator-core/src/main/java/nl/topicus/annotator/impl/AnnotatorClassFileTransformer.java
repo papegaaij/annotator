@@ -29,7 +29,7 @@ public class AnnotatorClassFileTransformer implements ClassFileTransformer {
 	public byte[] transform(ClassLoader loader, String className,
 			Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
 			byte[] classfileBuffer) {
-		log.warn("Transforming " + className);
+		log.info("Transforming " + className);
 		ClassPool pool = ClassPool.getDefault();
 		try {
 			CtClass jClass = pool.makeClass(new ByteArrayInputStream(
@@ -41,7 +41,7 @@ public class AnnotatorClassFileTransformer implements ClassFileTransformer {
 			jClass.defrost();
 			return ret;
 		} catch (IOException | CannotCompileException | NotFoundException e) {
-			e.printStackTrace();
+			log.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
 	}

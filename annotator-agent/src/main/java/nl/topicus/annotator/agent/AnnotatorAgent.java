@@ -71,7 +71,8 @@ public class AnnotatorAgent {
 	}
 
 	private static void registerClassLoadEnhancer(Instrumentation inst) {
-		System.out.println("I will annotate your classes!");
+		System.out.println("Annotator agent deployed: "
+				+ "Your classes will be annotated!");
 		inst.addTransformer(new ClassFileTransformer() {
 			@Override
 			public byte[] transform(ClassLoader loader, String className,

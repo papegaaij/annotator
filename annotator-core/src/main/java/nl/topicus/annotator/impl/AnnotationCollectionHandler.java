@@ -8,11 +8,17 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import nl.topicus.annotator.AnnotationBuilder;
 import nl.topicus.annotator.Annotator;
 
 public class AnnotationCollectionHandler<A extends Annotation> extends
 		StubMethodHandler {
+	private static final Logger log = LoggerFactory
+			.getLogger(AnnotationCollectionHandler.class);
+
 	private Annotator annotator;
 	private AnnotationBuilder<A> builder;
 	private AnnationUpdateAction updateAction;
@@ -27,21 +33,38 @@ public class AnnotationCollectionHandler<A extends Annotation> extends
 	@Override
 	public Object invoke(Object self, Method thisMethod, Method proceed,
 			Object[] args) throws Throwable {
-		A curAnn = annotator
-				.getAnnotation(thisMethod, builder.annotationType());
-		if (updateAction == AnnationUpdateAction.ADD && curAnn != null) {
+		boolean isAnnotated = annotator.isAnnotationPresent(thisMethod,
+				builder.annotationType());
+		if (log.isDebugEnabled()) {
+			log.debug("Annotating " + thisMethod + " with @"
+					+ builder.annotationType().getSimpleName());
+		}
+		if (updateAction == AnnationUpdateAction.ADD && isAnnotated) {
 			throw new IllegalArgumentException(thisMethod.getName()
 					+ " is already annotated with @"
 					+ builder.annotationType().getName());
 		}
 		if (updateAction == AnnationUpdateAction.MERGE) {
-			if (curAnn == null) {
+			if (!isAnnotated) {
 				throw new IllegalArgumentException(thisMethod.getName()
 						+ " is not annotated with @"
 						+ builder.annotationType().getName()
 						+ ", nothing to merge with");
 			} else {
-				builder.baseOn(curAnn);
+				A oldAnn = annotator.getAnnotation(thisMethod,
+						builder.annotationType());
+				if (log.isDebugEnabled()) {
+					log.debug("Starting with " + oldAnn);
+				}
+				builder.baseOn(oldAnn);
+			}
+		} else {
+			if (log.isDebugEnabled()) {
+				A oldAnn = annotator.getAnnotation(thisMethod,
+						builder.annotationType());
+				if (oldAnn != null) {
+					log.debug("Replacing " + oldAnn);
+				}
 			}
 		}
 

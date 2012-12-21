@@ -191,7 +191,7 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 		return value;
 	}
 
-	private void assertComplete() {
+	public void assertComplete() {
 		List<Method> missingMembers = new ArrayList<>();
 		for (Method curProperty : annotationClass.getDeclaredMethods()) {
 			if (getValue(curProperty) == null) {

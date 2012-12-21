@@ -16,6 +16,9 @@ import nl.topicus.annotator.impl.AnnotatorClassFileTransformer;
 import nl.topicus.annotator.impl.ClassAnnotationCreator;
 import nl.topicus.annotator.impl.MethodAnnotationCreator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -59,6 +62,8 @@ public class Annotator {
 		}
 	}
 
+	private static final Logger log = LoggerFactory.getLogger(Annotator.class);
+
 	private static Class<?> declaringClass(AnnotatedElement element) {
 		if (element instanceof Member)
 			return ((Member) element).getDeclaringClass();
@@ -78,6 +83,11 @@ public class Annotator {
 
 	public <A extends Annotation> void add(AnnotatedElement e,
 			AnnotationBuilder<A> builder) {
+		builder.assertComplete();
+
+		if (log.isDebugEnabled()) {
+			log.debug("Registering addition of " + builder.build() + " to " + e);
+		}
 		removeContainerIfExists(e, builder.annotationType());
 		AnnotationContainer<A> container = new AnnotationContainer<A>(e,
 				builder);
@@ -131,6 +141,10 @@ public class Annotator {
 			List<AnnotationMutator> mutators = new ArrayList<>();
 			for (AnnotationContainer<?> curContainer : curElement.getValue()) {
 				mutators.add(curContainer.getMutator());
+			}
+			if (log.isDebugEnabled()) {
+				log.debug("Adding transformer for "
+						+ curElement.getKey().getName());
 			}
 			AnnotatorAgent.addAnnotations((Class<?>) curElement.getKey(),
 					new AnnotatorClassFileTransformer(mutators));

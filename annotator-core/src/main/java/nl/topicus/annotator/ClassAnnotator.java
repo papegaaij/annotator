@@ -19,7 +19,13 @@ import nl.topicus.annotator.impl.AnnationUpdateAction;
 import nl.topicus.annotator.impl.AnnotationCollectionHandler;
 import nl.topicus.annotator.impl.Types;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ClassAnnotator<T> {
+	private static final Logger log = LoggerFactory
+			.getLogger(ClassAnnotator.class);
+
 	private T classProxy;
 	private Annotator annotator;
 	private Class<T> classToAnnotate;
@@ -52,7 +58,7 @@ public class ClassAnnotator<T> {
 		} catch (InstantiationException | IllegalAccessException ce) {
 			e = ce;
 		}
-		
+
 		for (Constructor<?> curConstructor : proxyClass.getConstructors()) {
 			try {
 				return instantiate(curConstructor);
@@ -79,6 +85,11 @@ public class ClassAnnotator<T> {
 
 	public <A extends Annotation> ClassAnnotator<T> mergeOnClass(
 			AnnotationBuilder<A> builder) {
+		if (log.isDebugEnabled()) {
+			log.debug("Annotating " + classToAnnotate.getName() + " with @"
+					+ builder.annotationType().getSimpleName());
+		}
+
 		if (!annotator.isAnnotationPresent(classToAnnotate,
 				builder.annotationType())) {
 			throw new IllegalArgumentException(classToAnnotate.getName()
@@ -86,23 +97,48 @@ public class ClassAnnotator<T> {
 					+ builder.annotationType().getName()
 					+ ", nothing to merge with");
 		}
-		builder.baseOn(annotator.getAnnotation(classToAnnotate,
-				builder.annotationType()));
-		return setOnClass(builder);
+
+		A oldAnn = annotator.getAnnotation(classToAnnotate,
+				builder.annotationType());
+		if (log.isDebugEnabled()) {
+			log.debug("Starting with " + oldAnn);
+		}
+		builder.baseOn(oldAnn);
+		return doSetOnClass(builder);
 	}
 
 	public <A extends Annotation> ClassAnnotator<T> addToClass(
 			AnnotationBuilder<A> builder) {
+		if (log.isDebugEnabled()) {
+			log.debug("Annotating " + classToAnnotate.getName() + " with @"
+					+ builder.annotationType().getSimpleName());
+		}
+
 		if (annotator.isAnnotationPresent(classToAnnotate,
 				builder.annotationType())) {
 			throw new IllegalArgumentException(classToAnnotate.getName()
 					+ " is already annotated with @"
 					+ builder.annotationType().getName());
 		}
-		return setOnClass(builder);
+		return doSetOnClass(builder);
 	}
 
 	public <A extends Annotation> ClassAnnotator<T> setOnClass(
+			AnnotationBuilder<A> builder) {
+		if (log.isDebugEnabled()) {
+			log.debug("Annotating " + classToAnnotate.getName() + " with @"
+					+ builder.annotationType().getSimpleName());
+			A oldAnn = annotator.getAnnotation(classToAnnotate,
+					builder.annotationType());
+			if (oldAnn != null) {
+				log.debug("Replacing " + oldAnn);
+			}
+		}
+
+		return doSetOnClass(builder);
+	}
+
+	private <A extends Annotation> ClassAnnotator<T> doSetOnClass(
 			AnnotationBuilder<A> builder) {
 		Target target = builder.annotationType().getAnnotation(Target.class);
 		boolean isClass = !classToAnnotate.isAnnotation();
