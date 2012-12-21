@@ -69,23 +69,26 @@ public class AnnotationBuilding {
 			@Override
 			public void setup(AnnotationWithDefault ann) {
 				set(ann.noDefault(), "setValue");
+				set(ann.oneMoreValue(), "changed");
 			}
 		};
 		Map<String, Object> values = builder.values();
-		assertEquals(2, values.size());
+		assertEquals(3, values.size());
 		assertEquals(String.class.getName(), values.get("hasDefault"));
 		assertEquals("setValue", values.get("noDefault"));
+		assertEquals("changed", values.get("oneMoreValue"));
 
 		AnnotationWithDefault dummy = builder.build();
 		assertNotNull(dummy);
 		assertEquals(AnnotationWithDefault.class, dummy.annotationType());
 		assertEquals(String.class, dummy.hasDefault());
 		assertEquals("setValue", dummy.noDefault());
+		assertEquals("changed", dummy.oneMoreValue());
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void incompleteSimple() {
-		AnnotationBuilder.of(AnnotationWithDefault.class);
+		AnnotationBuilder.of(AnnotationWithDefault.class).build();
 	}
 
 	@Test(expected = NullPointerException.class)

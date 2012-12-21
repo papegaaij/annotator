@@ -5,13 +5,19 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
+import nl.topicus.annotator.impl.AnnationUpdateAction;
 import nl.topicus.annotator.impl.AnnotationCollectionHandler;
+import nl.topicus.annotator.impl.Types;
 
 public class ClassAnnotator<T> {
 	private T classProxy;
@@ -40,18 +46,55 @@ public class ClassAnnotator<T> {
 
 		@SuppressWarnings("unchecked")
 		Class<T> proxyClass = factory.createClass();
+		ReflectiveOperationException e = null;
 		try {
 			return proxyClass.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			throw new RuntimeException(e);
+		} catch (InstantiationException | IllegalAccessException ce) {
+			e = ce;
 		}
+		
+		for (Constructor<?> curConstructor : proxyClass.getConstructors()) {
+			try {
+				return instantiate(curConstructor);
+			} catch (InstantiationException | IllegalAccessException
+					| InvocationTargetException ce) {
+				if (e == null)
+					e = ce;
+			}
+		}
+		throw new RuntimeException(
+				"Non of the constructors was able to instantiate the proxy", e);
+	}
+
+	@SuppressWarnings("unchecked")
+	private T instantiate(Constructor<?> constructor)
+			throws InstantiationException, IllegalAccessException,
+			InvocationTargetException {
+		List<Object> args = new ArrayList<>();
+		for (Class<?> curArg : constructor.getParameterTypes()) {
+			args.add(Types.defaultValue(curArg));
+		}
+		return (T) constructor.newInstance(args.toArray());
+	}
+
+	public <A extends Annotation> ClassAnnotator<T> mergeOnClass(
+			AnnotationBuilder<A> builder) {
+		if (!annotator.isAnnotationPresent(classToAnnotate,
+				builder.annotationType())) {
+			throw new IllegalArgumentException(classToAnnotate.getName()
+					+ " is not annotated with @"
+					+ builder.annotationType().getName()
+					+ ", nothing to merge with");
+		}
+		builder.baseOn(annotator.getAnnotation(classToAnnotate,
+				builder.annotationType()));
+		return setOnClass(builder);
 	}
 
 	public <A extends Annotation> ClassAnnotator<T> addToClass(
 			AnnotationBuilder<A> builder) {
-		if (classToAnnotate.isAnnotationPresent(builder.annotationType())
-				|| annotator.isAnnotationPresent(classToAnnotate,
-						builder.annotationType())) {
+		if (annotator.isAnnotationPresent(classToAnnotate,
+				builder.annotationType())) {
 			throw new IllegalArgumentException(classToAnnotate.getName()
 					+ " is already annotated with @"
 					+ builder.annotationType().getName());
@@ -83,17 +126,24 @@ public class ClassAnnotator<T> {
 		return this;
 	}
 
+	public <A extends Annotation> T mergeOnMethod(AnnotationBuilder<A> builder) {
+		((ProxyObject) classProxy)
+				.setHandler(new AnnotationCollectionHandler<>(annotator,
+						builder, AnnationUpdateAction.MERGE));
+		return classProxy;
+	}
+
 	public <A extends Annotation> T addToMethod(AnnotationBuilder<A> builder) {
 		((ProxyObject) classProxy)
 				.setHandler(new AnnotationCollectionHandler<>(annotator,
-						builder, false));
+						builder, AnnationUpdateAction.ADD));
 		return classProxy;
 	}
 
 	public <A extends Annotation> T setOnMethod(AnnotationBuilder<A> builder) {
 		((ProxyObject) classProxy)
 				.setHandler(new AnnotationCollectionHandler<>(annotator,
-						builder, true));
+						builder, AnnationUpdateAction.SET));
 		return classProxy;
 	}
 }

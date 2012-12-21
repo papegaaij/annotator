@@ -34,7 +34,8 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 	}
 	private A ann;
 	protected Method selectedProperty;
-	private Map<Method, Object> values = new HashMap<>();
+	private Map<Method, Object> implicitValues = new HashMap<>();
+	private Map<Method, Object> explicitValues = new HashMap<>();
 	private Class<A> annotationClass;
 
 	public AnnotationBuilder(Class<A> annotationClass) {
@@ -42,10 +43,9 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 		this.ann = createAnnotationProxy(annotationClass);
 		for (Method curProperty : annotationClass.getDeclaredMethods()) {
 			if (curProperty.getDefaultValue() != null)
-				values.put(curProperty, curProperty.getDefaultValue());
+				implicitValues.put(curProperty, curProperty.getDefaultValue());
 		}
 		setup(ann);
-		assertComplete();
 	}
 
 	public static <A extends Annotation> AnnotationBuilder<A> of(
@@ -59,11 +59,21 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 
 	public abstract void setup(A ann);
 
+	public void baseOn(A base) {
+		try {
+			for (Method curProperty : annotationClass.getDeclaredMethods()) {
+				implicitValues.put(curProperty, curProperty.invoke(base));
+			}
+		} catch (IllegalAccessException | InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public <T, V extends T> AnnotationBuilder<A> set(
 			Class<? extends T> annotationProperty, Class<V> value) {
 		if (value == null)
 			throw new NullPointerException("value cannot be null");
-		values.put(selectedProperty, value);
+		explicitValues.put(selectedProperty, value);
 		return this;
 	}
 
@@ -75,16 +85,22 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 			V value) {
 		if (value == null)
 			throw new NullPointerException("value cannot be null");
-		values.put(selectedProperty, value);
+		explicitValues.put(selectedProperty, value);
 		return this;
 	}
 
+	public Object getValue(Method method) {
+		Object ret = explicitValues.get(method);
+		return ret == null ? implicitValues.get(method) : ret;
+	}
+
 	public A build() {
+		assertComplete();
+
 		ProxyFactory factory = new ProxyFactory();
 		factory.setFilter(new MethodFilter() {
 			public boolean isHandled(Method m) {
-				return values.containsKey(m)
-						|| m.equals(ANNOTATION_TYPE_METHOD);
+				return getValue(m) != null || m.equals(ANNOTATION_TYPE_METHOD);
 			}
 		});
 		factory.setSuperclass(AnnotationLiteral.class);
@@ -101,7 +117,7 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 					if (m.equals(ANNOTATION_TYPE_METHOD)) {
 						return annotationClass;
 					}
-					return values.get(m);
+					return getValue(m);
 				}
 			});
 			return ret;
@@ -139,10 +155,11 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 	}
 
 	public Map<String, Object> values() {
+		assertComplete();
+
 		Map<String, Object> ret = new TreeMap<>();
-		for (Map.Entry<Method, Object> curValue : values.entrySet()) {
-			ret.put(curValue.getKey().getName(),
-					convertValue(curValue.getValue()));
+		for (Method curProperty : annotationClass.getDeclaredMethods()) {
+			ret.put(curProperty.getName(), convertValue(getValue(curProperty)));
 		}
 		return ret;
 	}
@@ -177,7 +194,7 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 	private void assertComplete() {
 		List<Method> missingMembers = new ArrayList<>();
 		for (Method curProperty : annotationClass.getDeclaredMethods()) {
-			if (!values.containsKey(curProperty)) {
+			if (getValue(curProperty) == null) {
 				missingMembers.add(curProperty);
 			}
 		}

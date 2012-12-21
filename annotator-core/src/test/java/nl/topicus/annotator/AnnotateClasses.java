@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlSchema;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
 
+import nl.topicus.annotator.annotations.AnnotationWithDefault;
 import nl.topicus.annotator.annotations.ClassRetained;
 import nl.topicus.annotator.annotations.ComplexAnnotation;
 import nl.topicus.annotator.annotations.Marker1;
@@ -157,6 +158,36 @@ public class AnnotateClasses {
 
 		assertArrayEquals(new Class[] { Integer.class, Long.class },
 				TestClass.class.getAnnotation(XmlSeeAlso.class).value());
+	}
+
+	@Test
+	public void mergeInfoExisting() {
+		@AnnotationWithDefault(noDefault = "noDefault", oneMoreValue = "changed")
+		class MergeClass {
+		}
+
+		assertTrue(MergeClass.class
+				.isAnnotationPresent(AnnotationWithDefault.class));
+		Annotator annotator = new Annotator();
+		ClassAnnotator<MergeClass> classAnnotator = annotator
+				.annotate(MergeClass.class);
+		classAnnotator
+				.mergeOnClass(new AnnotationBuilder<AnnotationWithDefault>(
+						AnnotationWithDefault.class) {
+					@Override
+					public void setup(AnnotationWithDefault ann) {
+						set((Class<? extends Object>) ann.hasDefault(),
+								Integer.class);
+						set(ann.oneMoreValue(), "changed again");
+					}
+				});
+		annotator.process();
+
+		AnnotationWithDefault valueOnClass = MergeClass.class
+				.getAnnotation(AnnotationWithDefault.class);
+		assertEquals("noDefault", valueOnClass.noDefault());
+		assertEquals("changed again", valueOnClass.oneMoreValue());
+		assertEquals(Integer.class, valueOnClass.hasDefault());
 	}
 
 	@Test(expected = IllegalArgumentException.class)

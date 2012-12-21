@@ -113,14 +113,16 @@ public class Annotator {
 
 	public boolean isAnnotationPresent(AnnotatedElement element,
 			Class<? extends Annotation> annotationClass) {
-		return getContainer(element, annotationClass) != null;
+		return getContainer(element, annotationClass) != null
+				|| element.isAnnotationPresent(annotationClass);
 	}
 
 	public <A extends Annotation> A getAnnotation(AnnotatedElement element,
 			Class<A> annotationClass) {
 		AnnotationContainer<A> container = getContainer(element,
 				annotationClass);
-		return container == null ? null : container.getBuilder().build();
+		return container == null ? element.getAnnotation(annotationClass)
+				: container.getBuilder().build();
 	}
 
 	public void process() {

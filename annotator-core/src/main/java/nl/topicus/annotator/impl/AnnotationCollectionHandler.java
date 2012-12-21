@@ -15,25 +15,34 @@ public class AnnotationCollectionHandler<A extends Annotation> extends
 		StubMethodHandler {
 	private Annotator annotator;
 	private AnnotationBuilder<A> builder;
-	private boolean allowRedefine;
+	private AnnationUpdateAction updateAction;
 
 	public AnnotationCollectionHandler(Annotator annotator,
-			AnnotationBuilder<A> builder, boolean allowRedefine) {
+			AnnotationBuilder<A> builder, AnnationUpdateAction updateAction) {
 		this.annotator = annotator;
 		this.builder = builder;
-		this.allowRedefine = allowRedefine;
+		this.updateAction = updateAction;
 	}
 
 	@Override
 	public Object invoke(Object self, Method thisMethod, Method proceed,
 			Object[] args) throws Throwable {
-		if (!allowRedefine
-				&& thisMethod.isAnnotationPresent(builder.annotationType())
-				|| annotator.isAnnotationPresent(thisMethod,
-						builder.annotationType())) {
+		A curAnn = annotator
+				.getAnnotation(thisMethod, builder.annotationType());
+		if (updateAction == AnnationUpdateAction.ADD && curAnn != null) {
 			throw new IllegalArgumentException(thisMethod.getName()
 					+ " is already annotated with @"
 					+ builder.annotationType().getName());
+		}
+		if (updateAction == AnnationUpdateAction.MERGE) {
+			if (curAnn == null) {
+				throw new IllegalArgumentException(thisMethod.getName()
+						+ " is not annotated with @"
+						+ builder.annotationType().getName()
+						+ ", nothing to merge with");
+			} else {
+				builder.baseOn(curAnn);
+			}
 		}
 
 		Target target = builder.annotationType().getAnnotation(Target.class);

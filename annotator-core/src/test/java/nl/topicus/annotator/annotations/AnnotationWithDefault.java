@@ -11,4 +11,6 @@ public @interface AnnotationWithDefault {
 	Class<?> hasDefault() default String.class;
 	
 	String noDefault();
+	
+	String oneMoreValue() default "default";
 }
