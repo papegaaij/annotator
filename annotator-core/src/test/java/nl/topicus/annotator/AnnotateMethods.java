@@ -130,8 +130,7 @@ public class AnnotateMethods {
 						set(ann.enumValue(), ElementType.ANNOTATION_TYPE);
 						set(ann.longs(), new long[] { 5, 6, 7 });
 						set(ann.nested(),
-								new AnnotationBuilder<NestedAnnotation>(
-										NestedAnnotation.class) {
+								new AnnotationBuilder<NestedAnnotation>() {
 									@Override
 									public void setup(NestedAnnotation ann) {
 										set(ann.value(), "blaat");
@@ -255,8 +254,8 @@ public class AnnotateMethods {
 
 		assertTrue("@Marker1 not added",
 				annotatedMethod().isAnnotationPresent(Marker1.class));
-		assertTrue("@XmlElement not preserved",
-				annotatedMethod().isAnnotationPresent(XmlElement.class));
+		assertTrue("@XmlElement not preserved", annotatedMethod()
+				.isAnnotationPresent(XmlElement.class));
 	}
 
 	@Test(expected = IllegalArgumentException.class)

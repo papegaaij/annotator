@@ -29,14 +29,12 @@ public class AnnotationBuilding {
 
 	@Test
 	public void complexAnnotation() {
-		AnnotationBuilder<ComplexAnnotation> builder = new AnnotationBuilder<ComplexAnnotation>(
-				ComplexAnnotation.class) {
+		AnnotationBuilder<ComplexAnnotation> builder = new AnnotationBuilder<ComplexAnnotation>() {
 			@Override
 			public void setup(ComplexAnnotation ann) {
 				set(ann.enumValue(), ElementType.ANNOTATION_TYPE);
 				set(ann.longs(), new long[] { 5, 6, 7 });
-				set(ann.nested(), new AnnotationBuilder<NestedAnnotation>(
-						NestedAnnotation.class) {
+				set(ann.nested(), new AnnotationBuilder<NestedAnnotation>() {
 					@Override
 					public void setup(NestedAnnotation ann) {
 						set(ann.value(), "blaat");
@@ -64,8 +62,7 @@ public class AnnotationBuilding {
 
 	@Test
 	public void defaultValues() {
-		AnnotationBuilder<AnnotationWithDefault> builder = new AnnotationBuilder<AnnotationWithDefault>(
-				AnnotationWithDefault.class) {
+		AnnotationBuilder<AnnotationWithDefault> builder = new AnnotationBuilder<AnnotationWithDefault>() {
 			@Override
 			public void setup(AnnotationWithDefault ann) {
 				set(ann.noDefault(), "setValue");
@@ -93,14 +90,12 @@ public class AnnotationBuilding {
 
 	@Test(expected = NullPointerException.class)
 	public void defaultInvalidValue() {
-		new AnnotationBuilder<AnnotationWithDefault>(
-				AnnotationWithDefault.class) {
+		new AnnotationBuilder<AnnotationWithDefault>() {
 			@Override
 			public void setup(AnnotationWithDefault ann) {
 				set(ann.noDefault(), null);
 			}
 		};
 	}
-	
-	
+
 }

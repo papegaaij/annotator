@@ -35,14 +35,12 @@ public class AnnotateClasses {
 		Annotator annotator = new Annotator();
 		ClassAnnotator<TestClass> classAnnotator = annotator
 				.annotate(TestClass.class);
-		classAnnotator.addToClass(new AnnotationBuilder<ComplexAnnotation>(
-				ComplexAnnotation.class) {
+		classAnnotator.addToClass(new AnnotationBuilder<ComplexAnnotation>() {
 			@Override
 			public void setup(ComplexAnnotation ann) {
 				set(ann.enumValue(), ElementType.ANNOTATION_TYPE);
 				set(ann.longs(), new long[] { 5, 6, 7 });
-				set(ann.nested(), new AnnotationBuilder<NestedAnnotation>(
-						NestedAnnotation.class) {
+				set(ann.nested(), new AnnotationBuilder<NestedAnnotation>() {
 					@Override
 					public void setup(NestedAnnotation ann) {
 						set(ann.value(), "blaat");
@@ -122,20 +120,18 @@ public class AnnotateClasses {
 		Annotator annotator = new Annotator();
 		ClassAnnotator<TestClass> classAnnotator = annotator
 				.annotate(TestClass.class);
-		classAnnotator
-				.addToClass(new AnnotationBuilder<XmlType>(XmlType.class) {
-					@Override
-					public void setup(XmlType ann) {
-						set(ann.name(), "nondefault1");
-					}
-				});
-		classAnnotator
-				.setOnClass(new AnnotationBuilder<XmlType>(XmlType.class) {
-					@Override
-					public void setup(XmlType ann) {
-						set(ann.name(), "nondefault2");
-					}
-				});
+		classAnnotator.addToClass(new AnnotationBuilder<XmlType>() {
+			@Override
+			public void setup(XmlType ann) {
+				set(ann.name(), "nondefault1");
+			}
+		});
+		classAnnotator.setOnClass(new AnnotationBuilder<XmlType>() {
+			@Override
+			public void setup(XmlType ann) {
+				set(ann.name(), "nondefault2");
+			}
+		});
 		annotator.process();
 
 		assertEquals("nondefault2", TestClass.class
@@ -147,8 +143,7 @@ public class AnnotateClasses {
 		Annotator annotator = new Annotator();
 		ClassAnnotator<TestClass> classAnnotator = annotator
 				.annotate(TestClass.class);
-		classAnnotator.setOnClass(new AnnotationBuilder<XmlSeeAlso>(
-				XmlSeeAlso.class) {
+		classAnnotator.setOnClass(new AnnotationBuilder<XmlSeeAlso>() {
 			@Override
 			public void setup(XmlSeeAlso ann) {
 				set(ann.value(), new Class[] { Integer.class, Long.class });
@@ -172,8 +167,7 @@ public class AnnotateClasses {
 		ClassAnnotator<MergeClass> classAnnotator = annotator
 				.annotate(MergeClass.class);
 		classAnnotator
-				.mergeOnClass(new AnnotationBuilder<AnnotationWithDefault>(
-						AnnotationWithDefault.class) {
+				.mergeOnClass(new AnnotationBuilder<AnnotationWithDefault>() {
 					@Override
 					public void setup(AnnotationWithDefault ann) {
 						set((Class<? extends Object>) ann.hasDefault(),

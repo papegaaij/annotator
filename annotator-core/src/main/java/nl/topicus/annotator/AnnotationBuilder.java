@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,11 +17,11 @@ import javassist.util.proxy.ProxyObject;
 
 import javax.enterprise.util.AnnotationLiteral;
 
+import nl.topicus.annotator.impl.StubMethodHandler;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.FluentIterable;
-
-import nl.topicus.annotator.impl.StubMethodHandler;
 
 public abstract class AnnotationBuilder<A extends Annotation> {
 	private static final Method ANNOTATION_TYPE_METHOD;
@@ -38,14 +39,34 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 	private Map<Method, Object> explicitValues = new HashMap<>();
 	private Class<A> annotationClass;
 
+	@SuppressWarnings("unchecked")
+	public AnnotationBuilder() {
+		ParameterizedType parameterizedType = (ParameterizedType) getClass()
+				.getGenericSuperclass();
+		java.lang.reflect.Type type = parameterizedType
+				.getActualTypeArguments()[0];
+		if (type instanceof Class) {
+			init((Class<A>) ((Class<?>) type).asSubclass(Annotation.class));
+		} else {
+			throw new IllegalArgumentException(
+					"AnnotationBuilder can only be instantiated with "
+							+ "concrete annotation types, not " + type);
+		}
+		setup(ann);
+	}
+
 	public AnnotationBuilder(Class<A> annotationClass) {
+		init(annotationClass);
+		setup(ann);
+	}
+
+	private void init(Class<A> annotationClass) {
 		this.annotationClass = annotationClass;
 		this.ann = createAnnotationProxy(annotationClass);
 		for (Method curProperty : annotationClass.getDeclaredMethods()) {
 			if (curProperty.getDefaultValue() != null)
 				implicitValues.put(curProperty, curProperty.getDefaultValue());
 		}
-		setup(ann);
 	}
 
 	public static <A extends Annotation> AnnotationBuilder<A> of(
