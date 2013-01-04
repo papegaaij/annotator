@@ -97,7 +97,12 @@ public abstract class AnnotationBuilder<A extends Annotation> {
 	public A build() {
 		assertComplete();
 
-		ProxyFactory factory = new ProxyFactory();
+		ProxyFactory factory = new ProxyFactory() {
+			@Override
+			protected ClassLoader getClassLoader0() {
+				return getInterfaces()[0].getClassLoader();
+			}
+		};
 		factory.setFilter(new MethodFilter() {
 			public boolean isHandled(Method m) {
 				return getValue(m) != null || m.equals(ANNOTATION_TYPE_METHOD);

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import javassist.ClassClassPath;
+import javassist.ClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
@@ -47,14 +49,24 @@ public abstract class AbstractAnnotationCreator implements AnnotationMutator {
 
 	private Annotation createAnnotation(ConstPool cp, String className,
 			Map<String, Object> members) throws NotFoundException {
-		CtClass annotationCtClass = ClassPool.getDefault().get(className);
-		Annotation ret = new Annotation(cp, annotationCtClass);
-		for (Map.Entry<String, Object> curMember : members.entrySet()) {
-			setValue(cp, getMemberType(annotationCtClass, curMember.getKey()),
-					ret.getMemberValue(curMember.getKey()),
-					curMember.getValue());
+		try {
+			ClassPath annotationClassPath = new ClassClassPath(
+					Class.forName(className));
+			ClassPool classPool = ClassPool.getDefault();
+			classPool.insertClassPath(annotationClassPath);
+			CtClass annotationCtClass = classPool.get(className);
+			Annotation ret = new Annotation(cp, annotationCtClass);
+			for (Map.Entry<String, Object> curMember : members.entrySet()) {
+				setValue(cp,
+						getMemberType(annotationCtClass, curMember.getKey()),
+						ret.getMemberValue(curMember.getKey()),
+						curMember.getValue());
+			}
+
+			return ret;
+		} catch (ClassNotFoundException e) {
+			throw new NotFoundException(e.getMessage());
 		}
-		return ret;
 	}
 
 	private CtClass getMemberType(CtClass annotationCtClass, String memberName)
